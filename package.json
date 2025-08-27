@@ -1,0 +1,30 @@
+{
+  "name": "blog-api",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/21Neil/blog-api#readme",
+  "bugs": {
+    "url": "https://github.com/21Neil/blog-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/21Neil/blog-api.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --watch app.js",
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.14.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "prisma": "^6.14.0"
+  }
+}
