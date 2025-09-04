@@ -8,7 +8,6 @@ const opts = {
 
 const jwtStrategy = new Strategy(opts, async (jwtPayload, done) => {
   try {
-    console.log(jwtPayload)
     const user = await prisma.user.findUnique({
       where: {
         id: jwtPayload.id

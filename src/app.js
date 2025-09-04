@@ -5,6 +5,8 @@ import authRouter from './routes/authRouter.js';
 import passport from 'passport';
 import 'dotenv/config';
 import jwtStrategy from './middleware/jwtStrategy.js';
+import { authenticated } from './middleware/authenticated.js';
+import adminRouter from './routes/adminRouter.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +18,7 @@ passport.use(jwtStrategy);
 app.use('/auth', authRouter);
 app.use('/posts', postRouter);
 app.use('/comments', commentRouter);
+app.use('/admin', authenticated, adminRouter)
 
 app.use((err, req, res, next) => {
   console.error(err);

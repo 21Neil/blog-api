@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") 
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -23,7 +23,7 @@ model User {
 
 model Comments {
   id      Int      @id @default(autoincrement())
-  email   String
+  name    String
   content String
   date    DateTime @default(now())
 
