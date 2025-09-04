@@ -21,7 +21,7 @@ model User {
   posts Post[] @relation()
 }
 
-model Comments {
+model Comment {
   id      Int      @id @default(autoincrement())
   name    String
   content String
@@ -38,7 +38,7 @@ model Post {
   date      DateTime @default(now())
   published Boolean
 
-  comments Comments[]
+  comments Comment[]
 
   author   User @relation(fields: [authorId], references: [id])
   authorId Int

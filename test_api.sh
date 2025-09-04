@@ -58,8 +58,27 @@ update_post() {
 
 delete_post() {
   curl -X DELETE \
-    "$URL/admin/posts/6" \
+    "$URL/admin/posts/7" \
+    -H "$AUTHORIZATION"
+}
+
+create_comment() {
+  curl -X POST \
+    "$URL/posts/1/comments" \
     -H "$CONTENT_TYPE_JSON" \
+    -d '{
+      "name": "Amy",
+      "content": "Wow!"
+    }'
+}
+
+get_comments() {
+  curl "$URL/posts/1/comments"
+}
+
+delete_comment() {
+  curl -X DELETE \
+    "$URL/admin/comments/3" \
     -H "$AUTHORIZATION"
 }
 
@@ -84,6 +103,15 @@ case "$1" in
     ;;
   delete_post)
     delete_post | jq
+    ;;
+  create_comment)
+    create_comment | jq
+    ;;
+  get_comments)
+    get_comments | jq
+    ;;
+  delete_comment)
+    delete_comment | jq
     ;;
   *)
     exit 1
