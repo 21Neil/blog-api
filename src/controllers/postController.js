@@ -1,4 +1,5 @@
 import * as postService from '../services/postService.js';
+import { uploadFileToR2 } from '../services/storageService.js';
 
 export const getAllPosts = async (req, res, next) => {
   try {
@@ -32,7 +33,21 @@ export const getPost = async (req, res, next) => {
 
 export const createPost = async (req, res, next) => {
   try {
-    const post = await postService.createPost(req.body);
+    const file = req.file;
+    const published = JSON.parse(req.body.published);
+
+    if (!file) {
+      throw createFileError('No file been upload.');
+    }
+
+    const imageKey = await uploadFileToR2(
+      file.originalname,
+      file.buffer,
+      file.mimetype,
+      published
+    );
+
+    const post = await postService.createPost({ ...req.body, published, imageKey, authorId: req.user.id });
 
     res.json(post);
   } catch (err) {

@@ -1,10 +1,17 @@
 import { Strategy, ExtractJwt } from 'passport-jwt'
 import prisma from '../utils/prisma.js'
 
+const cookieExtractor = req => {
+  if (req && req.cookies) {
+    return req.cookies['Authorization']
+  }
+}
+
 const opts = { 
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
   secretOrKey: process.env.JWT_SECRET
 }
+
 
 const jwtStrategy = new Strategy(opts, async (jwtPayload, done) => {
   try {
@@ -20,7 +27,7 @@ const jwtStrategy = new Strategy(opts, async (jwtPayload, done) => {
       return done(null, false)
     }
   } catch (err) {
-    return (err, false)
+    return done(err, false)
   }
 })
 

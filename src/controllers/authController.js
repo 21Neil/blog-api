@@ -5,9 +5,21 @@ export const login = async (req, res, next) => {
 
   try {
     const token = await loginUser(username, password);
-    return res.status(200).json({ token });
+    return res
+      .status(201)
+      .cookie('Authorization', token, {
+        httpOnly: true,
+        maxAge: 86400000,
+        sameSite: 'none',
+        secure: true,
+      })
+      .json('Login success');
   } catch (err) {
-    next(err)
+    next(err);
   }
+};
 
+export const checkLogin = async (req, res, next) => {
+  if (req.user) return res.json({ isLogin: true })
+  if (!req.user) return res.json({ isLogin: false })
 };

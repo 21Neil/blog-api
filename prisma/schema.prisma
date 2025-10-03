@@ -34,6 +34,7 @@ model Comment {
 model Post {
   id        Int      @id @default(autoincrement())
   title     String
+  imageKey  String
   content   String
   date      DateTime @default(now())
   published Boolean
