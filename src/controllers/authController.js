@@ -20,6 +20,21 @@ export const login = async (req, res, next) => {
 };
 
 export const checkLogin = async (req, res, next) => {
-  if (req.user) return res.json({ isLogin: true })
-  if (!req.user) return res.json({ isLogin: false })
+  if (req.user) return res.json({ isLogin: true });
+  if (!req.user) return res.json({ isLogin: false });
+};
+
+export const logout = async (req, res, next) => {
+  try {
+    return res
+      .status(200)
+      .clearCookie('Authorization', {
+        httpOnly: true,
+        sameSite: 'none',
+        secure: true,
+      })
+      .json('Logout success');
+  } catch (err) {
+    next(err);
+  }
 };
