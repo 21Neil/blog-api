@@ -1,26 +1,29 @@
 import * as postService from '../services/postService.js';
-import { deleteFileFromR2, getFileFromR2, uploadFileToR2 } from '../services/storageService.js';
+import {
+  copyFileInR2,
+  deleteFileFromR2,
+  getFileFromR2,
+  uploadFileToR2,
+} from '../services/storageService.js';
+
+const getImageUrl = (key, published) => {
+  const baseUrl = process.env.API_BASE_URL;
+
+  return published
+    ? `https://blog-api.twoneil.party/${key}`
+    : `${baseUrl}/admin/posts/images/${key}`;
+};
 
 export const getAllPosts = async (req, res, next) => {
-  const baseUrl = process.env.API_BASE_URL;
   try {
     const posts = await postService.getAllPosts();
-    const postsWithImageURL = posts.map(item => {
-      if (item.published)
-        return {
-          title: item.title,
-          imageUrl: `https://blog-api.twoneil.party/${item.imageKey}`,
-          TEXTContent: item.TEXTContent,
-          published: item.published,
-        };
-      if (!item.published)
-        return {
-          title: item.title,
-          imageUrl: `${baseUrl}/admin/posts/images/${item.imageKey}`,
-          TEXTContent: item.TEXTContent,
-          published: item.published,
-        };
-    });
+    const postsWithImageURL = posts.map(item => ({
+      id: item.id,
+      title: item.title,
+      imageUrl: getImageUrl(item.imageKey, item.published),
+      TEXTContent: item.TEXTContent,
+      published: item.published,
+    }));
 
     res.json(postsWithImageURL);
   } catch (err) {
@@ -79,6 +82,13 @@ export const createPost = async (req, res, next) => {
 
 export const updatePost = async (req, res, next) => {
   try {
+    const prevPost = await postService.getPostById(+req.params.id);
+    
+    if (prevPost.published !== req.body.published) {
+      await copyFileInR2(prevPost.imageKey, prevPost.published);
+      await deleteFileFromR2(prevPost.imageKey, prevPost.published)
+    }
+
     const post = await postService.updatePost(+req.params.id, req.body);
 
     res.json(post);
@@ -90,7 +100,7 @@ export const updatePost = async (req, res, next) => {
 export const deletePost = async (req, res, next) => {
   try {
     const post = await postService.deletePost(+req.params.id);
-    deleteFileFromR2(post.imageKey)
+    await deleteFileFromR2(post.imageKey, post.published);
 
     res.json(post);
   } catch (err) {

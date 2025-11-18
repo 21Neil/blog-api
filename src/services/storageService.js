@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  CopyObjectCommand,
 } from '@aws-sdk/client-s3';
 import path from 'path';
 
@@ -62,9 +63,9 @@ export const getFileFromR2 = async key => {
   );
 };
 
-export const deleteFileFromR2 = async key => {
+export const deleteFileFromR2 = async (key, published) => {
   if (published)
-    await R2.send(
+    return await R2.send(
       new DeleteObjectCommand({
         Bucket: PUBLISHED_BUCKET,
         Key: key,
@@ -72,12 +73,30 @@ export const deleteFileFromR2 = async key => {
     );
 
   if (!published)
-    await R2.send(
+    return await R2.send(
       new DeleteObjectCommand({
         Bucket: UNPUBLISHED_BUCKET,
         Key: key,
       })
     );
+};
 
-  return 'delete success';
+export const copyFileInR2 = async (key, published) => {
+  if (published)
+    return await R2.send(
+      new CopyObjectCommand({
+        Bucket: UNPUBLISHED_BUCKET,
+        Key: key,
+        CopySource: PUBLISHED_BUCKET + '/' + key,
+      })
+    );
+
+  if (!published)
+    return await R2.send(
+      new CopyObjectCommand({
+        Bucket: PUBLISHED_BUCKET,
+        Key: key,
+        CopySource: UNPUBLISHED_BUCKET + '/' + key,
+      })
+    );
 };
