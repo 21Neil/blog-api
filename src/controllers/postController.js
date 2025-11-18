@@ -31,7 +31,7 @@ export const getAllPosts = async (req, res, next) => {
   }
 };
 
-export const getPublishedPosts = async (req, res, next) => {
+export const getAllPublishedPosts = async (req, res, next) => {
   try {
     const posts = await postService.getPublishedPosts();
 
@@ -44,6 +44,16 @@ export const getPublishedPosts = async (req, res, next) => {
 export const getPost = async (req, res, next) => {
   try {
     const post = await postService.getPostById(+req.params.id);
+
+    res.json(post);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getPublishedPost = async (req, res, next) => {
+  try {
+    const post = await postService.getPublishedPostById(+req.params.id);
 
     res.json(post);
   } catch (err) {
@@ -83,10 +93,10 @@ export const createPost = async (req, res, next) => {
 export const updatePost = async (req, res, next) => {
   try {
     const prevPost = await postService.getPostById(+req.params.id);
-    
+
     if (prevPost.published !== req.body.published) {
       await copyFileInR2(prevPost.imageKey, prevPost.published);
-      await deleteFileFromR2(prevPost.imageKey, prevPost.published)
+      await deleteFileFromR2(prevPost.imageKey, prevPost.published);
     }
 
     const post = await postService.updatePost(+req.params.id, req.body);

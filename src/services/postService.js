@@ -20,6 +20,15 @@ export const getPostById = async id => {
   });
 };
 
+export const getPublishedPostById = async id => {
+  return await prisma.post.findUnique({
+    where: {
+      id,
+      published: true
+    },
+  });
+};
+
 export const createPost = async body => {
   return await prisma.post.create({
     data: {
