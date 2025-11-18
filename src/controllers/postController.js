@@ -11,12 +11,14 @@ export const getAllPosts = async (req, res, next) => {
           title: item.title,
           imageUrl: `https://blog-api.twoneil.party/${item.imageKey}`,
           TEXTContent: item.TEXTContent,
+          published: item.published,
         };
       if (!item.published)
         return {
           title: item.title,
           imageUrl: `${baseUrl}/admin/posts/images/${item.imageKey}`,
           TEXTContent: item.TEXTContent,
+          published: item.published,
         };
     });
 
