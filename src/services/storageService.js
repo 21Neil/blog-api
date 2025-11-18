@@ -21,15 +21,6 @@ const R2 = new S3Client({
   },
 });
 
-const streamToBuffet = stream => {
-  return new Promise((res, rej) => {
-    const chunks = [];
-    stream.on('data', chunk => chunks.push(chunk));
-    stream.on('error', rej);
-    stream.on('end', () => res(Buffer.concat(chunks)));
-  });
-};
-
 export const uploadFileToR2 = async (
   originalname,
   body,
@@ -39,7 +30,6 @@ export const uploadFileToR2 = async (
   const fileExtension = path.extname(originalname);
   const filename = crypto.randomUUID() + fileExtension;
 
-  console.log(filename)
   if (published)
     await R2.send(
       new PutObjectCommand({
@@ -64,12 +54,30 @@ export const uploadFileToR2 = async (
 };
 
 export const getFileFromR2 = async key => {
-  const { Body } = await R2.send(
+  return await R2.send(
     new GetObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: UNPUBLISHED_BUCKET,
       Key: key,
     })
   );
+};
 
-  return streamToBuffet(Body);
+export const deleteFileFromR2 = async key => {
+  if (published)
+    await R2.send(
+      new DeleteObjectCommand({
+        Bucket: PUBLISHED_BUCKET,
+        Key: key,
+      })
+    );
+
+  if (!published)
+    await R2.send(
+      new DeleteObjectCommand({
+        Bucket: UNPUBLISHED_BUCKET,
+        Key: key,
+      })
+    );
+
+  return 'delete success';
 };

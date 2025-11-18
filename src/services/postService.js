@@ -24,7 +24,8 @@ export const createPost = async body => {
   return await prisma.post.create({
     data: {
       title: body.title,
-      content: body.content,
+      TEXTContent: body.TEXTContent,
+      HTMLContent: body.HTMLContent,
       imageKey: body.imageKey,
       published: body.published,
       authorId: body.authorId,
