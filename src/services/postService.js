@@ -35,6 +35,7 @@ export const createPost = async body => {
       title: body.title,
       TEXTContent: body.TEXTContent,
       HTMLContent: body.HTMLContent,
+      JSONContent: body.JSONContent,
       imageKey: body.imageKey,
       published: body.published,
       authorId: body.authorId,
@@ -49,7 +50,9 @@ export const updatePost = async (id, body) => {
     },
     data: {
       title: body.title,
-      content: body.content,
+      TEXTContent: body.TEXTContent,
+      HTMLContent: body.HTMLContent,
+      JSONContent: body.JSONContent,
       imageKey: body.imageKey,
       published: body.published,
     },

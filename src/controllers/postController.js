@@ -1,8 +1,9 @@
 import * as postService from '../services/postService.js';
 import {
-  copyFileInR2,
   deleteFileFromR2,
   getFileFromR2,
+  publishedFileInR2,
+  unpublishedFileInR2,
   uploadFileToR2,
 } from '../services/storageService.js';
 
@@ -44,8 +45,15 @@ export const getAllPublishedPosts = async (req, res, next) => {
 export const getPost = async (req, res, next) => {
   try {
     const post = await postService.getPostById(+req.params.id);
+    const postRes = {
+      title: post.title,
+      imageUrl: getImageUrl(post.imageKey, post.published),
+      TEXTContent: post.TEXTContent,
+      HTMLContent: post.HTMLContent,
+      JSONContent: post.JSONContent,
+    };
 
-    res.json(post);
+    res.json(postRes);
   } catch (err) {
     next(err);
   }
@@ -90,16 +98,61 @@ export const createPost = async (req, res, next) => {
   }
 };
 
+const handleImageReplacement = async (file, reqPublished, prevPost) => {
+  try {
+    const imageKey = await uploadFileToR2(
+      file.originalname,
+      file.buffer,
+      file.mimetype,
+      reqPublished
+    );
+
+    await deleteFileFromR2(prevPost.imageKey, prevPost.published);
+
+    return imageKey;
+  } catch (err) {
+    next(err);
+  }
+};
+
+const handlePublishedStatusChange = async (reqPublished, key) => {
+  if (reqPublished) await publishedFileInR2(key);
+  if (!reqPublished) await unpublishedFileInR2(key);
+};
+
 export const updatePost = async (req, res, next) => {
   try {
     const prevPost = await postService.getPostById(+req.params.id);
+    const reqPublished = JSON.parse(req.body.published);
+    const file = req.file;
+    const id = +req.params.id;
 
-    if (prevPost.published !== req.body.published) {
-      await copyFileInR2(prevPost.imageKey, prevPost.published);
-      await deleteFileFromR2(prevPost.imageKey, prevPost.published);
+    // 有新圖片上傳
+    if (file) {
+      const imageKey = await handleImageReplacement(
+        file,
+        reqPublished,
+        prevPost
+      );
+      const post = await postService.updatePost(id, {
+        ...req.body,
+        imageKey,
+        published: reqPublished,
+      });
+
+      return res.json(post);
     }
 
-    const post = await postService.updatePost(+req.params.id, req.body);
+    // 沒有新圖片上傳，但發布狀態變更
+    if (prevPost.published !== reqPublished) {
+      await handlePublishedStatusChange(reqPublished, prevPost.imageKey);
+    }
+
+    // 更新䩞文
+    const post = await postService.updatePost(id, {
+      ...req.body,
+      published: reqPublished,
+    });
 
     res.json(post);
   } catch (err) {

@@ -37,6 +37,7 @@ model Post {
   imageKey    String
   TEXTContent String
   HTMLContent String
+  JSONContent String
   date        DateTime @default(now())
   published   Boolean
 

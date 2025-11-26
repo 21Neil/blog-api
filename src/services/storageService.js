@@ -63,6 +63,40 @@ export const getFileFromR2 = async key => {
   );
 };
 
+export const publishedFileInR2 = async key => {
+  await R2.send(
+    new CopyObjectCommand({
+      Bucket: PUBLISHED_BUCKET,
+      Key: key,
+      CopySource: UNPUBLISHED_BUCKET + '/' + key,
+    })
+  );
+
+  await R2.send(
+    new DeleteObjectCommand({
+      Bucket: UNPUBLISHED_BUCKET,
+      Key: key,
+    })
+  );
+};
+
+export const unpublishedFileInR2 = async key => {
+  await R2.send(
+    new CopyObjectCommand({
+      Bucket: UNPUBLISHED_BUCKET,
+      Key: key,
+      CopySource: PUBLISHED_BUCKET + '/' + key,
+    })
+  );
+
+  await R2.send(
+    new DeleteObjectCommand({
+      Bucket: PUBLISHED_BUCKET,
+      Key: key,
+    })
+  );
+};
+
 export const deleteFileFromR2 = async (key, published) => {
   if (published)
     return await R2.send(
@@ -77,26 +111,6 @@ export const deleteFileFromR2 = async (key, published) => {
       new DeleteObjectCommand({
         Bucket: UNPUBLISHED_BUCKET,
         Key: key,
-      })
-    );
-};
-
-export const copyFileInR2 = async (key, published) => {
-  if (published)
-    return await R2.send(
-      new CopyObjectCommand({
-        Bucket: UNPUBLISHED_BUCKET,
-        Key: key,
-        CopySource: PUBLISHED_BUCKET + '/' + key,
-      })
-    );
-
-  if (!published)
-    return await R2.send(
-      new CopyObjectCommand({
-        Bucket: PUBLISHED_BUCKET,
-        Key: key,
-        CopySource: UNPUBLISHED_BUCKET + '/' + key,
       })
     );
 };

@@ -15,7 +15,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 adminRouter.get('/posts', getAllPosts);
 adminRouter.post('/posts', upload.single('cover_image'), createPost);
-adminRouter.put('/posts/:id', updatePost);
+adminRouter.put('/posts/:id',upload.single('cover_image'), updatePost);
 adminRouter.delete('/posts/:id', deletePost);
 adminRouter.post('/posts/:id', getPost);
 adminRouter.delete('/comments/:id', deleteComment);
