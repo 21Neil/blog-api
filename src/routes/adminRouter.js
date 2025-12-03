@@ -6,6 +6,7 @@ import {
   getPost,
   getPostCoverImage,
   updatePost,
+  uploadContentImage,
 } from '../controllers/postController.js';
 import { deleteComment } from '../controllers/commentController.js';
 import multer from 'multer';
@@ -15,7 +16,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 adminRouter.get('/posts', getAllPosts);
 adminRouter.post('/posts', upload.single('cover_image'), createPost);
-adminRouter.put('/posts/:id',upload.single('cover_image'), updatePost);
+adminRouter.post(
+  '/posts/upload-content-image',
+  upload.single('uploadImage'),
+  uploadContentImage
+);
+adminRouter.put('/posts/:id', upload.single('cover_image'), updatePost);
 adminRouter.delete('/posts/:id', deletePost);
 adminRouter.post('/posts/:id', getPost);
 adminRouter.delete('/comments/:id', deleteComment);

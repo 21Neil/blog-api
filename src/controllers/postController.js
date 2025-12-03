@@ -194,3 +194,15 @@ export const getPostCoverImage = async (req, res, next) => {
     next(err);
   }
 };
+
+export const uploadContentImage = async (req, res, next) => {
+  const file = req.file;
+  const imageKey = await uploadFileToR2(
+    file.originalname,
+    file.buffer,
+    file.mimetype,
+    false
+  );
+
+  res.json(getImageUrl(imageKey, false));
+};
