@@ -4,7 +4,8 @@ import passport from 'passport';
 import 'dotenv/config';
 import apiRouter from './routes/apiRouter.js';
 import cors from 'cors';
-import cookieParser from 'cookie-parser'
+import cookieParser from 'cookie-parser';
+import { startR2CleanCron } from './tasks/scheduler.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,7 +20,7 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
 
 passport.use(jwtStrategy);
 
@@ -31,6 +32,8 @@ app.use((err, req, res, next) => {
     .status(err.statusCode || 500)
     .json({ message: err.message || 'Internal server error.' });
 });
+
+startR2CleanCron();
 
 app.listen(PORT, () =>
   console.log(`server running in http://localhost:${PORT} ...`)

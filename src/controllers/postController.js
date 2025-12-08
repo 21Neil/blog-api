@@ -6,6 +6,7 @@ import {
   unpublishedFileInR2,
   uploadFileToR2,
 } from '../services/storageService.js';
+import { createTempImage } from '../services/tempImageService.js';
 
 const getImageUrl = (key, published) => {
   const baseUrl = process.env.API_BASE_URL;
@@ -197,12 +198,22 @@ export const getPostCoverImage = async (req, res, next) => {
 
 export const uploadContentImage = async (req, res, next) => {
   const file = req.file;
-  const imageKey = await uploadFileToR2(
-    file.originalname,
-    file.buffer,
-    file.mimetype,
-    false
-  );
 
-  res.json(getImageUrl(imageKey, false));
+  try {
+    const imageKey = await uploadFileToR2(
+      file.originalname,
+      file.buffer,
+      file.mimetype,
+      false
+    );
+
+    await createTempImage(imageKey);
+
+    res.json({
+      key: imageKey,
+      url: getImageUrl(imageKey, false),
+    });
+  } catch (err) {
+    next(err);
+  }
 };

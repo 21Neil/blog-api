@@ -46,3 +46,10 @@ model Post {
   author   User @relation(fields: [authorId], references: [id])
   authorId Int
 }
+
+model TempImage {
+  id           Int      @id @default(autoincrement())
+  imageKey     String
+  isReferenced Boolean
+  uploadAt     DateTime @default(now())
+}
