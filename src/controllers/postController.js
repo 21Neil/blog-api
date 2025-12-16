@@ -6,14 +6,28 @@ import {
   unpublishedFileInR2,
   uploadFileToR2,
 } from '../services/storageService.js';
-import { createTempImage } from '../services/tempImageService.js';
+import {
+  createTempImage,
+  getTempImage,
+  updateTempImage,
+} from '../services/tempImageService.js';
+import { createFileError } from '../utils/customErrors.js';
+import tiptapConverter from '../utils/tiptapConverter.js';
 
 const getImageUrl = (key, published) => {
   const baseUrl = process.env.API_BASE_URL;
 
   return published
     ? `https://blog-api.twoneil.party/${key}`
-    : `${baseUrl}/admin/posts/images/${key}`;
+    : `${baseUrl}/api/admin/posts/images/${key}`;
+};
+
+const getImageKeysFromContent = content => {
+  const imageKeys = content
+    .filter(item => item.type === 'image')
+    .map(item => item.attrs.src.split('/').pop());
+
+  return imageKeys;
 };
 
 export const getAllPosts = async (req, res, next) => {
@@ -24,6 +38,7 @@ export const getAllPosts = async (req, res, next) => {
       title: item.title,
       imageUrl: getImageUrl(item.imageKey, item.published),
       TEXTContent: item.TEXTContent,
+      JSONContent: item.JSONContent,
       published: item.published,
     }));
 
@@ -86,8 +101,15 @@ export const createPost = async (req, res, next) => {
       published
     );
 
+    const newContent = await handleContentPublishedStatusChange(
+      published,
+      req.body.JSONContent
+    );
+
     const post = await postService.createPost({
       ...req.body,
+      JSONContent: newContent,
+      HTMLContent: tiptapConverter(newContent),
       published,
       imageKey,
       authorId: req.user.id,
@@ -112,13 +134,69 @@ const handleImageReplacement = async (file, reqPublished, prevPost) => {
 
     return imageKey;
   } catch (err) {
-    next(err);
+    throw new Error(err);
   }
 };
 
-const handlePublishedStatusChange = async (reqPublished, key) => {
+const handleContentImageReplacement = async (key, reqPublished) => {
+  try {
+    const imageData = await getTempImage(key);
+
+    // 進入此步驟代表內文圖片已被引用了
+    if (!imageData.referenced) await updateTempImage(key, { referenced: true });
+    // 發布狀態沒變不用改變圖片儲存槽
+    if (imageData.published === reqPublished) return;
+
+    await updateTempImage(key, { published: reqPublished });
+
+    handlePublishedStatusChange(key, reqPublished);
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
+const handlePublishedStatusChange = async (key, reqPublished) => {
   if (reqPublished) await publishedFileInR2(key);
   if (!reqPublished) await unpublishedFileInR2(key);
+};
+
+const handleContentPublishedStatusChange = async (
+  reqPublished,
+  JSONRawContent
+) => {
+  const JSONContent = JSON.parse(JSONRawContent);
+  const content = JSONContent.content;
+  const imageKeys = getImageKeysFromContent(content);
+
+  // 處理內文圖片發布狀態
+  imageKeys.forEach(
+    async key => await handleContentImageReplacement(key, reqPublished)
+  );
+
+  // 處理內文圖片連結
+  const newContent = content.map(item => {
+    if (item.type !== 'image') return item;
+    const url = new URL(item.attrs.src);
+    const origin = url.origin;
+    const path = url.pathname;
+    const key = path.substring(path.lastIndexOf('/') + 1);
+
+    if (origin === process.env.API_BASE_URL && reqPublished) {
+      item.attrs.src = getImageUrl(key, reqPublished);
+    }
+    if (origin === 'https://blog-api.twoneil.party' && !reqPublished) {
+      item.attrs.src = getImageUrl(key, reqPublished);
+    }
+
+    return item;
+  });
+
+  const newJSONContent = {
+    ...JSONContent,
+    content: newContent,
+  };
+
+  return JSON.stringify(newJSONContent);
 };
 
 export const updatePost = async (req, res, next) => {
@@ -128,7 +206,7 @@ export const updatePost = async (req, res, next) => {
     const file = req.file;
     const id = +req.params.id;
 
-    // 有新圖片上傳
+    // 有新封面圖片上傳
     if (file) {
       const imageKey = await handleImageReplacement(
         file,
@@ -144,14 +222,22 @@ export const updatePost = async (req, res, next) => {
       return res.json(post);
     }
 
-    // 沒有新圖片上傳，但發布狀態變更
+    // 沒有新封面圖片上傳，但發布狀態變更
     if (prevPost.published !== reqPublished) {
-      await handlePublishedStatusChange(reqPublished, prevPost.imageKey);
+      await handlePublishedStatusChange(prevPost.imageKey, reqPublished);
     }
+
+    // 處理內文發布狀態變更
+    const newContent = await handleContentPublishedStatusChange(
+      reqPublished,
+      req.body.JSONContent
+    );
 
     // 更新䩞文
     const post = await postService.updatePost(id, {
       ...req.body,
+      JSONContent: newContent,
+      HTMLContent: tiptapConverter(newContent),
       published: reqPublished,
     });
 

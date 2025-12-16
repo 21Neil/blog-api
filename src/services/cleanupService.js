@@ -12,7 +12,7 @@ const getExpiredOrphanedKeys = async () => {
 
   const keysToDelete = await prisma.tempImage.findMany({
     where: {
-      isReferenced: false,
+      referenced: false,
       uploadAt: {
         lt: cutoffTime,
       },
@@ -43,22 +43,22 @@ export const runR2GarbageCollection = async () => {
     return;
   }
 
-  await orphanedImages.forEach(async item => {
+  orphanedImages.forEach(async item => {
     try {
-      await deleteFileFromR2(item.imageKey, false);
+      await deleteFileFromR2(item.id, false);
       await removeKeyRecord(item.id);
 
-      console.log(`[R2 GC] Success deleted and removed key: ${item.imageKey}`);
+      console.log(`[R2 GC] Success deleted and removed key: ${item.id}`);
     } catch (err) {
       if (err.statusCode === 404) {
         await removeKeyRecord(item.id);
 
         console.log(
-          `[R2 GC] Key ${item.imageKey} not found in R2, removing record.`
+          `[R2 GC] Key ${item.id} not found in R2, removing record.`
         );
       } else {
         console.error(
-          `[R2 GC] Failed to delete key ${item.imageKey}:`,
+          `[R2 GC] Failed to delete key ${item.id}:`,
           err.massage
         );
       }

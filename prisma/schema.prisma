@@ -48,8 +48,8 @@ model Post {
 }
 
 model TempImage {
-  id           Int      @id @default(autoincrement())
-  imageKey     String
-  isReferenced Boolean
-  uploadAt     DateTime @default(now())
+  id         String   @id
+  referenced Boolean  @default(false)
+  published  Boolean  @default(false)
+  uploadAt   DateTime @default(now())
 }
