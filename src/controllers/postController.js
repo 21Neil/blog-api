@@ -31,6 +31,111 @@ const getImageKeysFromContent = content => {
   return imageKeys;
 };
 
+const handleImageReplacement = async (file, reqPublished, prevPost) => {
+  try {
+    const imageKey = await uploadFileToR2(
+      file.originalname,
+      file.buffer,
+      file.mimetype,
+      reqPublished
+    );
+
+    await deleteFileFromR2(prevPost.imageKey, prevPost.published);
+
+    return imageKey;
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
+const handleContentImageReplacement = async (key, reqPublished) => {
+  try {
+    const imageData = await getTempImage(key);
+
+    // 進入此步驟代表內文圖片已被引用了
+    if (!imageData.referenced) await updateTempImage(key, { referenced: true });
+    // 發布狀態沒變不用改變圖片儲存槽
+    if (imageData.published === reqPublished) return;
+
+    await updateTempImage(key, { published: reqPublished });
+
+    handlePublishedStatusChange(key, reqPublished);
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
+const handlePublishedStatusChange = async (key, reqPublished) => {
+  if (reqPublished) await publishedFileInR2(key);
+  if (!reqPublished) await unpublishedFileInR2(key);
+};
+
+const handleContentPublishedStatusChange = async (
+  reqPublished,
+  JSONRawContent
+) => {
+  const JSONContent = JSON.parse(JSONRawContent);
+  const content = JSONContent.content;
+  const imageKeys = getImageKeysFromContent(content);
+
+  // 處理內文圖片發布狀態
+  imageKeys.forEach(
+    async key => await handleContentImageReplacement(key, reqPublished)
+  );
+
+  // 處理內文圖片連結
+  const newContent = content.map(item => {
+    if (item.type !== 'image') return item;
+    const url = new URL(item.attrs.src);
+    const origin = url.origin;
+    const path = url.pathname;
+    const key = path.substring(path.lastIndexOf('/') + 1);
+
+    if (origin === process.env.API_BASE_URL && reqPublished) {
+      item.attrs.src = getImageUrl(key, reqPublished);
+    }
+    if (origin === 'https://blog-api.twoneil.party' && !reqPublished) {
+      item.attrs.src = getImageUrl(key, reqPublished);
+    }
+
+    return item;
+  });
+
+  const newJSONContent = {
+    ...JSONContent,
+    content: newContent,
+  };
+
+  return JSON.stringify(newJSONContent);
+};
+
+const deleteContentImages = async keys => {
+  keys.forEach(async key => {
+    const imageData = await getTempImage(key);
+
+    await deleteFileFromR2(key, imageData.published);
+    await deleteTempImage(key);
+  });
+};
+
+const handleUpdatePostContentImageDelete = async (prevRawJson, currRawJson) => {
+  const prevJson = JSON.parse(prevRawJson).content;
+  const currJson = JSON.parse(currRawJson).content;
+  const prevImageKeys = getImageKeysFromContent(prevJson);
+  const currImageKeys = getImageKeysFromContent(currJson);
+  const keysToDelete = prevImageKeys.filter(
+    item => !currImageKeys.includes(item)
+  );
+
+  await deleteContentImages(keysToDelete);
+};
+
+const handleDeletePostContentImageDelete = async rawJson => {
+  const json = JSON.parse(rawJson).content;
+  const keys = getImageKeysFromContent(json);
+  await deleteContentImages(keys);
+};
+
 export const getAllPosts = async (req, res, next) => {
   try {
     const posts = await postService.getAllPosts();
@@ -122,103 +227,6 @@ export const createPost = async (req, res, next) => {
   }
 };
 
-const handleImageReplacement = async (file, reqPublished, prevPost) => {
-  try {
-    const imageKey = await uploadFileToR2(
-      file.originalname,
-      file.buffer,
-      file.mimetype,
-      reqPublished
-    );
-
-    await deleteFileFromR2(prevPost.imageKey, prevPost.published);
-
-    return imageKey;
-  } catch (err) {
-    throw new Error(err);
-  }
-};
-
-const handleContentImageReplacement = async (key, reqPublished) => {
-  try {
-    const imageData = await getTempImage(key);
-
-    // 進入此步驟代表內文圖片已被引用了
-    if (!imageData.referenced) await updateTempImage(key, { referenced: true });
-    // 發布狀態沒變不用改變圖片儲存槽
-    if (imageData.published === reqPublished) return;
-
-    await updateTempImage(key, { published: reqPublished });
-
-    handlePublishedStatusChange(key, reqPublished);
-  } catch (err) {
-    throw new Error(err);
-  }
-};
-
-const handlePublishedStatusChange = async (key, reqPublished) => {
-  if (reqPublished) await publishedFileInR2(key);
-  if (!reqPublished) await unpublishedFileInR2(key);
-};
-
-const handleContentPublishedStatusChange = async (
-  reqPublished,
-  JSONRawContent
-) => {
-  const JSONContent = JSON.parse(JSONRawContent);
-  const content = JSONContent.content;
-  const imageKeys = getImageKeysFromContent(content);
-
-  // 處理內文圖片發布狀態
-  imageKeys.forEach(
-    async key => await handleContentImageReplacement(key, reqPublished)
-  );
-
-  // 處理內文圖片連結
-  const newContent = content.map(item => {
-    if (item.type !== 'image') return item;
-    const url = new URL(item.attrs.src);
-    const origin = url.origin;
-    const path = url.pathname;
-    const key = path.substring(path.lastIndexOf('/') + 1);
-
-    if (origin === process.env.API_BASE_URL && reqPublished) {
-      item.attrs.src = getImageUrl(key, reqPublished);
-    }
-    if (origin === 'https://blog-api.twoneil.party' && !reqPublished) {
-      item.attrs.src = getImageUrl(key, reqPublished);
-    }
-
-    return item;
-  });
-
-  const newJSONContent = {
-    ...JSONContent,
-    content: newContent,
-  };
-
-  return JSON.stringify(newJSONContent);
-};
-
-const handleContentImageDelete = async (prevRawJson, currRawJson) => {
-  const prevJson = JSON.parse(prevRawJson).content;
-  const currJson = JSON.parse(currRawJson).content;
-  const prevImageKeys = getImageKeysFromContent(prevJson);
-  const currImageKeys = getImageKeysFromContent(currJson);
-  const keysToDelete = prevImageKeys.filter(
-    item => !currImageKeys.includes(item)
-  );
-  console.log(prevImageKeys, currImageKeys, keysToDelete);
-
-  keysToDelete.forEach(async key => {
-    const imageData = await getTempImage(key)
-
-    console.log(key, imageData, imageData.published)
-    await deleteFileFromR2(key, imageData.published);
-    await deleteTempImage(key);
-  });
-};
-
 export const updatePost = async (req, res, next) => {
   try {
     const prevPost = await postService.getPostById(+req.params.id);
@@ -248,7 +256,10 @@ export const updatePost = async (req, res, next) => {
     }
 
     // 處理內文圖片刪減
-    await handleContentImageDelete(prevPost.JSONContent, req.body.JSONContent);
+    await handleUpdatePostContentImageDelete(
+      prevPost.JSONContent,
+      req.body.JSONContent
+    );
 
     // 處理內文發布狀態變更
     const newContent = await handleContentPublishedStatusChange(
@@ -274,7 +285,7 @@ export const deletePost = async (req, res, next) => {
   try {
     const post = await postService.deletePost(+req.params.id);
     await deleteFileFromR2(post.imageKey, post.published);
-    // await deleteContentImageFromR2();
+    await handleDeletePostContentImageDelete(post.JSONContent);
 
     res.json(post);
   } catch (err) {
