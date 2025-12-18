@@ -27,3 +27,11 @@ export const getTempImage = async imageKey => {
     },
   });
 };
+
+export const deleteTempImage = async imageKey => {
+  return await prisma.tempImage.delete({
+    where: {
+      id: imageKey,
+    },
+  });
+};

@@ -8,6 +8,7 @@ import {
 } from '../services/storageService.js';
 import {
   createTempImage,
+  deleteTempImage,
   getTempImage,
   updateTempImage,
 } from '../services/tempImageService.js';
@@ -199,6 +200,25 @@ const handleContentPublishedStatusChange = async (
   return JSON.stringify(newJSONContent);
 };
 
+const handleContentImageDelete = async (prevRawJson, currRawJson) => {
+  const prevJson = JSON.parse(prevRawJson).content;
+  const currJson = JSON.parse(currRawJson).content;
+  const prevImageKeys = getImageKeysFromContent(prevJson);
+  const currImageKeys = getImageKeysFromContent(currJson);
+  const keysToDelete = prevImageKeys.filter(
+    item => !currImageKeys.includes(item)
+  );
+  console.log(prevImageKeys, currImageKeys, keysToDelete);
+
+  keysToDelete.forEach(async key => {
+    const imageData = await getTempImage(key)
+
+    console.log(key, imageData, imageData.published)
+    await deleteFileFromR2(key, imageData.published);
+    await deleteTempImage(key);
+  });
+};
+
 export const updatePost = async (req, res, next) => {
   try {
     const prevPost = await postService.getPostById(+req.params.id);
@@ -227,13 +247,16 @@ export const updatePost = async (req, res, next) => {
       await handlePublishedStatusChange(prevPost.imageKey, reqPublished);
     }
 
+    // 處理內文圖片刪減
+    await handleContentImageDelete(prevPost.JSONContent, req.body.JSONContent);
+
     // 處理內文發布狀態變更
     const newContent = await handleContentPublishedStatusChange(
       reqPublished,
       req.body.JSONContent
     );
 
-    // 更新䩞文
+    // 更新貼文
     const post = await postService.updatePost(id, {
       ...req.body,
       JSONContent: newContent,
@@ -251,6 +274,7 @@ export const deletePost = async (req, res, next) => {
   try {
     const post = await postService.deletePost(+req.params.id);
     await deleteFileFromR2(post.imageKey, post.published);
+    // await deleteContentImageFromR2();
 
     res.json(post);
   } catch (err) {
