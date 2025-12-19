@@ -10,6 +10,7 @@ import {
 } from '../controllers/postController.js';
 import { deleteComment } from '../controllers/commentController.js';
 import multer from 'multer';
+import { changePassword } from '../controllers/authController.js';
 
 const adminRouter = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -26,5 +27,6 @@ adminRouter.delete('/posts/:id', deletePost);
 adminRouter.post('/posts/:id', getPost);
 adminRouter.delete('/comments/:id', deleteComment);
 adminRouter.get('/posts/images/:key', getPostCoverImage);
+adminRouter.put('/password', changePassword)
 
 export default adminRouter;

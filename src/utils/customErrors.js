@@ -1,7 +1,7 @@
-export const createAuthError = message => {
+export const createAuthError = (message, statusCode = 401) => {
   const err = new Error(message);
   err.name = 'AuthError';
-  err.statusCode = 401;
+  err.statusCode = statusCode;
   return err;
 };
 

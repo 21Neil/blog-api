@@ -20,3 +20,16 @@ export const loginUser = async (username, password) => {
     expiresIn: '1d',
   });
 };
+
+export const changeUserPassword = async (id, password) => {
+  const hashedPassword = await bcryptjs.hash(password, 10);
+  
+  await prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      password: hashedPassword
+    }
+  })
+}
