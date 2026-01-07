@@ -15,7 +15,7 @@ app.use(
     origin:
       process.env.NODE_ENV === 'prod'
         ? 'https://www.your-production-site.com'
-        : 'http://localhost:5173',
+        : ['http://localhost:5173', 'http://localhost:5174'],
     credentials: true,
   })
 );
