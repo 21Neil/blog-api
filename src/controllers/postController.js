@@ -157,8 +157,14 @@ export const getAllPosts = async (req, res, next) => {
 export const getAllPublishedPosts = async (req, res, next) => {
   try {
     const posts = await postService.getPublishedPosts();
+    const postsWithImageURL = posts.map(item => ({
+      id: item.id,
+      title: item.title,
+      imageUrl: getImageUrl(item.imageKey, true),
+      TEXTContent: item.TEXTContent,
+    }))
 
-    res.json(posts);
+    res.json(postsWithImageURL);
   } catch (err) {
     next(err);
   }
