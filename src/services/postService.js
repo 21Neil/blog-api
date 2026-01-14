@@ -24,7 +24,10 @@ export const getPublishedPostById = async id => {
   return await prisma.post.findUnique({
     where: {
       id,
-      published: true
+      published: true,
+    },
+    include: {
+      comments: true,
     },
   });
 };

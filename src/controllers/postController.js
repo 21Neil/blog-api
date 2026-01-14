@@ -162,7 +162,7 @@ export const getAllPublishedPosts = async (req, res, next) => {
       title: item.title,
       imageUrl: getImageUrl(item.imageKey, true),
       TEXTContent: item.TEXTContent,
-    }))
+    }));
 
     res.json(postsWithImageURL);
   } catch (err) {
@@ -190,8 +190,14 @@ export const getPost = async (req, res, next) => {
 export const getPublishedPost = async (req, res, next) => {
   try {
     const post = await postService.getPublishedPostById(+req.params.id);
+    const postRes = {
+      title: post.title,
+      imageUrl: getImageUrl(post.imageKey, post.published),
+      HTMLContent: post.HTMLContent,
+      comments: post.comments
+    };
 
-    res.json(post);
+    res.json(postRes);
   } catch (err) {
     next(err);
   }
