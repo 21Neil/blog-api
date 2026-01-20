@@ -13,10 +13,10 @@ export const getCommentByPostId = async (req, res, next) => {
 
 export const createComment = async (req, res, next) => {
   try {
-    if (req.body.name.length > 45)
+    if (req.body.name.length > 15)
       throw createError(
         'STRING_TOO_LONG',
-        'Name must not exceed 45 character',
+        'Name must not exceed 15 character',
         400,
       );
     const comment = await commentService.createComment(
