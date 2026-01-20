@@ -12,7 +12,7 @@ import {
   getTempImage,
   updateTempImage,
 } from '../services/tempImageService.js';
-import { createFileError } from '../utils/customErrors.js';
+import { createError } from '../utils/customErrors.js';
 import tiptapConverter from '../utils/tiptapConverter.js';
 
 const getImageUrl = (key, published) => {
@@ -37,7 +37,7 @@ const handleImageReplacement = async (file, reqPublished, prevPost) => {
       file.originalname,
       file.buffer,
       file.mimetype,
-      reqPublished
+      reqPublished,
     );
 
     await deleteFileFromR2(prevPost.imageKey, prevPost.published);
@@ -72,7 +72,7 @@ const handlePublishedStatusChange = async (key, reqPublished) => {
 
 const handleContentPublishedStatusChange = async (
   reqPublished,
-  JSONRawContent
+  JSONRawContent,
 ) => {
   const JSONContent = JSON.parse(JSONRawContent);
   const content = JSONContent.content;
@@ -80,7 +80,7 @@ const handleContentPublishedStatusChange = async (
 
   // 處理內文圖片發布狀態
   imageKeys.forEach(
-    async key => await handleContentImageReplacement(key, reqPublished)
+    async key => await handleContentImageReplacement(key, reqPublished),
   );
 
   // 處理內文圖片連結
@@ -124,7 +124,7 @@ const handleUpdatePostContentImageDelete = async (prevRawJson, currRawJson) => {
   const prevImageKeys = getImageKeysFromContent(prevJson);
   const currImageKeys = getImageKeysFromContent(currJson);
   const keysToDelete = prevImageKeys.filter(
-    item => !currImageKeys.includes(item)
+    item => !currImageKeys.includes(item),
   );
 
   await deleteContentImages(keysToDelete);
@@ -194,7 +194,7 @@ export const getPublishedPost = async (req, res, next) => {
       title: post.title,
       imageUrl: getImageUrl(post.imageKey, post.published),
       HTMLContent: post.HTMLContent,
-      comments: post.comments
+      comments: post.comments,
     };
 
     res.json(postRes);
@@ -209,19 +209,19 @@ export const createPost = async (req, res, next) => {
     const published = JSON.parse(req.body.published);
 
     if (!file) {
-      throw createFileError('No file been upload.');
+      throw createError('FILE_ERROR', 'No file been upload.', 400);
     }
 
     const imageKey = await uploadFileToR2(
       file.originalname,
       file.buffer,
       file.mimetype,
-      published
+      published,
     );
 
     const newContent = await handleContentPublishedStatusChange(
       published,
-      req.body.JSONContent
+      req.body.JSONContent,
     );
 
     const post = await postService.createPost({
@@ -251,7 +251,7 @@ export const updatePost = async (req, res, next) => {
       const imageKey = await handleImageReplacement(
         file,
         reqPublished,
-        prevPost
+        prevPost,
       );
       const post = await postService.updatePost(id, {
         ...req.body,
@@ -270,13 +270,13 @@ export const updatePost = async (req, res, next) => {
     // 處理內文圖片刪減
     await handleUpdatePostContentImageDelete(
       prevPost.JSONContent,
-      req.body.JSONContent
+      req.body.JSONContent,
     );
 
     // 處理內文發布狀態變更
     const newContent = await handleContentPublishedStatusChange(
       reqPublished,
-      req.body.JSONContent
+      req.body.JSONContent,
     );
 
     // 更新貼文
@@ -315,7 +315,7 @@ export const getPostCoverImage = async (req, res, next) => {
 
     res.setHeader(
       'Content-Type',
-      image.ContentType || 'application/octet-stream'
+      image.ContentType || 'application/octet-stream',
     );
     res.setHeader('Content-Disposition', `inline; filename="${imageKey}"`);
     if (image.ContentLength)
@@ -337,7 +337,7 @@ export const uploadContentImage = async (req, res, next) => {
       file.originalname,
       file.buffer,
       file.mimetype,
-      false
+      false,
     );
 
     await createTempImage(imageKey);

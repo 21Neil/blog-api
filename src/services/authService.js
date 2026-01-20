@@ -1,7 +1,7 @@
 import prisma from '../utils/prisma.js';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { createAuthError } from '../utils/customErrors.js';
+import { createError } from '../utils/customErrors.js';
 
 export const loginUser = async (username, password) => {
   const user = await prisma.user.findUnique({
@@ -14,7 +14,7 @@ export const loginUser = async (username, password) => {
     : false;
 
   if (!user || !isPasswordValid)
-    throw createAuthError('Invalid user or password.');
+    throw createError('AUTH_ERROR', 'Invalid user or password.', 401);
 
   return jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
     expiresIn: '1d',
@@ -23,13 +23,13 @@ export const loginUser = async (username, password) => {
 
 export const changeUserPassword = async (id, password) => {
   const hashedPassword = await bcryptjs.hash(password, 10);
-  
+
   await prisma.user.update({
     where: {
       id,
     },
     data: {
-      password: hashedPassword
-    }
-  })
-}
+      password: hashedPassword,
+    },
+  });
+};

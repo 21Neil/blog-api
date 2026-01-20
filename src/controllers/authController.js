@@ -1,5 +1,5 @@
 import { changeUserPassword, loginUser } from '../services/authService.js';
-import { createAuthError } from '../utils/customErrors.js';
+import { createError } from '../utils/customErrors.js';
 import bcrypt from 'bcryptjs';
 import z from 'zod';
 
@@ -12,7 +12,7 @@ const passwordSchema = z
   .refine(password => /[0-9]/.test(password), '密碼最少需要一個數字')
   .refine(
     password => /[!@#$%^&*]/.test(password),
-    '密碼需要包含以下一個!@#$%^&*字元'
+    '密碼需要包含以下一個!@#$%^&*字元',
   )
   .trim();
 
@@ -60,12 +60,15 @@ export const changePassword = async (req, res, next) => {
 
   try {
     const validation = passwordSchema.safeParse(newPassword);
-    if (!validation.success) throw createAuthError(validation.error.issues[0].message, 400)
+    if (!validation.success)
+      throw createError('AUTH_ERROR', validation.error.issues[0].message, 400);
 
-    if (password === newPassword) throw createAuthError('新密碼不能與舊密碼相同', 400)
+    if (password === newPassword)
+      throw createError('AUTH_ERROR', '新密碼不能與舊密碼相同', 400);
 
     const isPasswordValid = await bcrypt.compare(password, req.user.password);
-    if (!isPasswordValid) throw createAuthError('Invalid password.');
+    if (!isPasswordValid)
+      throw createError('AUTH_ERROR', 'Invalid password.', 401);
 
     await changeUserPassword(req.user.id, req.body.newPassword);
 

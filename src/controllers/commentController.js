@@ -1,4 +1,5 @@
 import * as commentService from '../services/commentService.js';
+import { createError } from '../utils/customErrors.js';
 
 export const getCommentByPostId = async (req, res, next) => {
   try {
@@ -12,7 +13,16 @@ export const getCommentByPostId = async (req, res, next) => {
 
 export const createComment = async (req, res, next) => {
   try {
-    const comment = await commentService.createComment(+req.params.id, req.body);
+    if (req.body.name.length > 45)
+      throw createError(
+        'STRING_TOO_LONG',
+        'Name must not exceed 45 character',
+        400,
+      );
+    const comment = await commentService.createComment(
+      +req.params.id,
+      req.body,
+    );
 
     res.json(comment);
   } catch (err) {
