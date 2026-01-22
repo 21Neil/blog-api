@@ -137,10 +137,16 @@ const handleDeletePostContentImageDelete = async rawJson => {
 };
 
 const compressImage = async file => {
-  return await sharp(file.buffer)
+  try {
+    const compressedImage = await sharp(file.buffer)
     .resize(1080, null, { withoutEnlargement: true })
     .toFormat('webp', { quality: 85, effort: 4, smartSubsample: true })
     .toBuffer();
+
+    return compressedImage
+  } catch (err) {
+    throw createError('SERVER_ERROR', 'Image compress fail', 500)
+  }
 };
 
 export const getAllPosts = async (req, res, next) => {
