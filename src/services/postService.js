@@ -1,13 +1,20 @@
 import prisma from '../utils/prisma.js';
 
 export const getAllPosts = async () => {
-  return await prisma.post.findMany();
+  return await prisma.post.findMany({
+    orderBy: {
+      date: 'desc',
+    },
+  });
 };
 
 export const getPublishedPosts = async () => {
   return await prisma.post.findMany({
     where: {
       published: true,
+    },
+    orderBy: {
+      date: 'desc',
     },
   });
 };
