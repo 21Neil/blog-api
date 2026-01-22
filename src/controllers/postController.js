@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import * as postService from '../services/postService.js';
 import {
   deleteFileFromR2,
@@ -17,7 +18,6 @@ import tiptapConverter from '../utils/tiptapConverter.js';
 
 const getImageUrl = (key, published) => {
   const baseUrl = process.env.API_BASE_URL;
-
   return published
     ? `https://blog-api.twoneil.party/${key}`
     : `${baseUrl}/api/admin/posts/images/${key}`;
@@ -136,6 +136,13 @@ const handleDeletePostContentImageDelete = async rawJson => {
   await deleteContentImages(keys);
 };
 
+const compressImage = async file => {
+  return await sharp(file.buffer)
+    .resize(1080, null, { withoutEnlargement: true })
+    .toFormat('webp', { quality: 85, effort: 4, smartSubsample: true })
+    .toBuffer();
+};
+
 export const getAllPosts = async (req, res, next) => {
   try {
     const posts = await postService.getAllPosts();
@@ -212,9 +219,11 @@ export const createPost = async (req, res, next) => {
       throw createError('FILE_ERROR', 'No file been upload.', 400);
     }
 
+    const compressedImage = await compressImage(file.buffer);
+
     const imageKey = await uploadFileToR2(
       file.originalname,
-      file.buffer,
+      compressedImage,
       file.mimetype,
       published,
     );
@@ -332,10 +341,12 @@ export const getPostCoverImage = async (req, res, next) => {
 export const uploadContentImage = async (req, res, next) => {
   const file = req.file;
 
+  const compressedImage = await compressImage(file.buffer);
+
   try {
     const imageKey = await uploadFileToR2(
       file.originalname,
-      file.buffer,
+      compressedImage,
       file.mimetype,
       false,
     );
