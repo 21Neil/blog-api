@@ -12,10 +12,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === 'prod'
-        ? ['https://blog.twoneil.party', 'https://blog-back.twoneil.party']
-        : ['http://localhost:5173', 'http://localhost:5174'],
+    origin: process.env.CORS_ORIGIN.split(','),
     credentials: true,
   })
 );
