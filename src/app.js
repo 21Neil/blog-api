@@ -14,7 +14,7 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === 'prod'
-        ? 'https://www.your-production-site.com'
+        ? ['https://blog.twoneil.party', 'https://blog-back.twoneil.party']
         : ['http://localhost:5173', 'http://localhost:5174'],
     credentials: true,
   })

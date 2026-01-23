@@ -19,7 +19,7 @@ import tiptapConverter from '../utils/tiptapConverter.js';
 const getImageUrl = (key, published) => {
   const baseUrl = process.env.API_BASE_URL;
   return published
-    ? `https://blog-api.twoneil.party/${key}`
+    ? `https://blog-images.twoneil.party/${key}`
     : `${baseUrl}/api/admin/posts/images/${key}`;
 };
 
