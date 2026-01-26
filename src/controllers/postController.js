@@ -320,7 +320,7 @@ export const deletePost = async (req, res, next) => {
   }
 };
 
-export const getPostCoverImage = async (req, res, next) => {
+export const getPrivateImage = async (req, res, next) => {
   const imageKey = req.params.key;
   try {
     const image = await getFileFromR2(imageKey);

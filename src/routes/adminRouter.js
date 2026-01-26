@@ -4,7 +4,7 @@ import {
   deletePost,
   getAllPosts,
   getPost,
-  getPostCoverImage,
+  getPrivateImage,
   updatePost,
   uploadContentImage,
 } from '../controllers/postController.js';
@@ -26,7 +26,7 @@ adminRouter.put('/posts/:id', upload.single('cover_image'), updatePost);
 adminRouter.delete('/posts/:id', deletePost);
 adminRouter.post('/posts/:id', getPost);
 adminRouter.delete('/comments/:id', deleteComment);
-adminRouter.get('/posts/images/:key', getPostCoverImage);
+adminRouter.get('/posts/images/:key', getPrivateImage);
 adminRouter.put('/password', changePassword)
 
 export default adminRouter;
