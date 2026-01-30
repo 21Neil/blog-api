@@ -66,29 +66,6 @@ test_api.sh
 README.md
 ```
 
-## 🔑 環境變數設定 (.env)
-
-請在根目錄建立 .env 並參考以下設定：
-
-```
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/blog"
-# Auth
-JWT_SECRET="your_jwt_secret"
-# API URL
-API_BASE_URL="http://localhost:3000"
-
-# Cloudflare R2
-R2_ACCESS_KEY_ID="your_access_key"
-R2_SECRET_ACCESS_KEY="your_secret_key"
-R2_ENDPOINT="your_endpoint_url"
-R2_PUBLIC_BUCKET_NAME="public-blog-images"
-R2_PRIVATE_BUCKET_NAME="private-blog-images"
-
-# CORs origin
-CORS_ORIGIN="http://localhost:5173,http://localhost:5174"
-```
-
 ## 🛰 主要 API 端點範例
 
 ### 🔐 身份驗證 (Authentication)
@@ -115,6 +92,29 @@ CORS_ORIGIN="http://localhost:5173,http://localhost:5174"
 | GET    | /api/admin/posts/images/:key          | 安全讀取：取得 R2 私有圖片的預簽連結     | 🔐   |
 | DELETE | /api/admin/posts/:id                  | 連動刪除：刪除文章時同步移除 R2 雲端檔案 | 🔐   |
 
+## 🔑 環境變數設定 (.env)
+
+請在根目錄建立 .env 並參考以下設定：
+
+```
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/blog"
+# Auth
+JWT_SECRET="your_jwt_secret"
+# API URL
+API_BASE_URL="http://localhost:3000"
+
+# Cloudflare R2
+R2_ACCESS_KEY_ID="your_access_key"
+R2_SECRET_ACCESS_KEY="your_secret_key"
+R2_ENDPOINT="your_endpoint_url"
+R2_PUBLIC_BUCKET_NAME="public-blog-images"
+R2_PRIVATE_BUCKET_NAME="private-blog-images"
+
+# CORs origin
+CORS_ORIGIN="http://localhost:5173,http://localhost:5174"
+```
+
 ## 🚀 快速開始
 
 1. 安裝依賴
@@ -122,13 +122,13 @@ CORS_ORIGIN="http://localhost:5173,http://localhost:5174"
 npm install
 ```
 
-2.資料庫同步
+2. 資料庫同步
 ```
 npx prisma generate
 npx prisma db push
 ```
 
-3.啟動開發伺服器
+3. 啟動開發伺服器
 ```
 npm run dev
 ```
