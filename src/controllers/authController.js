@@ -14,7 +14,6 @@ const passwordSchema = z
     password => /[!@#$%^&*]/.test(password),
     '密碼需要包含以下一個!@#$%^&*字元',
   )
-  .trim();
 
 export const login = async (req, res, next) => {
   const { username, password } = req.body;
